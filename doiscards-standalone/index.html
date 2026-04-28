@@ -1,600 +1,470 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0a0a0a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="dois cards" />
-  <meta name="description" content="Uma sala para dois. Dois textos por dia." />
-  <link rel="manifest" href="manifest.json" />
-  <title>dois cards</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --surface2: #1e1e1e;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.15);
-      --text: #f0ede8;
-      --text2: rgba(240,237,232,0.55);
-      --text3: rgba(240,237,232,0.28);
-      --accent: #d4c5a9;
-      --green: #4a7c59;
-      --green-bg: rgba(74,124,89,0.15);
-      --gold: #d4a853;
-      --serif: 'DM Serif Display', Georgia, serif;
-      --sans: 'DM Sans', system-ui, sans-serif;
-      --r: 14px;
-      --r2: 20px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bot: env(safe-area-inset-bottom, 0px);
-    }
-    html, body, #root { height: 100%; width: 100%; overflow: hidden; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      font-weight: 300;
-      -webkit-font-smoothing: antialiased;
-      -webkit-tap-highlight-color: transparent;
-      overscroll-behavior: none;
-    }
-    input, textarea, button, select { font-family: var(--sans); }
-    ::-webkit-scrollbar { width: 0; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:translateY(0) } }
-    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-    .au { animation: fadeUp .5s ease both }
-    .au1 { animation: fadeUp .5s ease .1s both }
-    .au2 { animation: fadeUp .5s ease .2s both }
-    .au3 { animation: fadeUp .5s ease .3s both }
-    .screen {
-      position: fixed; inset: 0;
-      background: var(--bg);
-      padding-top: var(--safe-top);
-      padding-bottom: var(--safe-bot);
-      display: flex; flex-direction: column;
-    }
-    .scroll { overflow-y: auto; overflow-x: hidden; flex: 1; -webkit-overflow-scrolling: touch; }
-    .pad { padding: 0 22px; }
-    /* Inputs */
-    input[type=text], textarea {
-      display: block; width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: var(--r);
-      padding: 14px 16px;
-      font-size: 16px; color: var(--text);
-      outline: none;
-      transition: border-color .2s;
-    }
-    input[type=text]:focus, textarea:focus { border-color: rgba(255,255,255,.3); }
-    textarea { resize: none; line-height: 1.7; }
-    /* Buttons */
-    .btn-main {
-      display: block; width: 100%;
-      background: var(--text); color: var(--bg);
-      border: none; border-radius: var(--r);
-      padding: 15px; font-size: 15px;
-      cursor: pointer; letter-spacing: .02em;
-      transition: opacity .15s;
-    }
-    .btn-main:active { opacity: .8; }
-    .btn-ghost {
-      display: block; width: 100%;
-      background: transparent; color: var(--text2);
-      border: 1px solid var(--border2); border-radius: var(--r);
-      padding: 15px; font-size: 15px;
-      cursor: pointer; transition: border-color .15s;
-    }
-    .btn-ghost:active { border-color: var(--border2); opacity: .7; }
-    .btn-sm {
-      background: var(--surface2); color: var(--accent);
-      border: 1px solid var(--border); border-radius: var(--r);
-      padding: 8px 18px; font-size: 13px; cursor: pointer;
-    }
-    .btn-back {
-      background: none; border: none;
-      color: var(--text3); font-size: 14px;
-      cursor: pointer; padding: 0; letter-spacing: .02em;
-    }
-    /* Cards */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r2);
-      padding: 20px;
-    }
-    .card-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-    .card-user { font-size:12px; color:var(--text3); letter-spacing:.08em; text-transform:uppercase; }
-    .card-text { font-family:var(--serif); font-size:18px; line-height:1.55; font-style:italic; color:var(--text); }
-    .card-placeholder { font-size:14px; color:var(--text3); line-height:1.6; font-style:italic; }
-    /* Badges */
-    .badge { font-size:11px; padding:3px 10px; border-radius:20px; letter-spacing:.04em; }
-    .badge-green { background:var(--green-bg); color:var(--green); }
-    .badge-dim { background:transparent; color:var(--text3); border:1px solid var(--border); }
-    /* Stars */
-    .star { font-size:28px; cursor:pointer; transition:color .12s; line-height:1; }
-    .star.on { color:var(--gold); }
-    .star.off { color:var(--border2); }
-    .star.sm { font-size:14px; }
-    /* Nav */
-    .nav {
-      border-top:1px solid var(--border);
-      background:var(--bg);
-      display:flex; justify-content:space-around;
-      padding: 14px 0;
-      padding-bottom: max(var(--safe-bot), 16px);
-    }
-    .nav-btn { background:none; border:none; color:var(--text2); font-size:13px; cursor:pointer; letter-spacing:.04em; padding:6px 20px; }
-    /* Misc */
-    .label { display:block; font-size:12px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px; }
-    .err { font-size:13px; color:#c0392b; margin-top:8px; }
-    .dot-pulse { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; animation:pulse 2s ease infinite; }
-    .room-badge { display:inline-block; font-size:12px; color:var(--text3); letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--border); border-radius:20px; padding:4px 12px; margin-bottom:10px; }
-    .divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#0e0e0e"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="dois cards"/>
+<title>dois cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0e0e0e;color:#e8e2d9;font-family:'DM Sans',sans-serif}
+#app{min-height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;text-align:center}
+.serif{font-family:'DM Serif Display',serif}
+.logo{font-family:'DM Serif Display',serif;font-size:38px;color:#c8a96e}
+.sub{font-size:14px;color:#555;line-height:1.8;margin-top:8px;white-space:pre-line}
+.btn{font-size:14px;border-radius:12px;padding:13px 24px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;width:100%;display:block;border:none;margin-bottom:10px;font-weight:400}
+.btn-gold{background:#c8a96e;color:#0e0e0e;font-weight:500}
+.btn-gold:active{opacity:.8}
+.btn-outline{background:none;border:.5px solid #2e2e2e;color:#888}
+.btn-outline:active{background:#1a1a1a}
+.btn-sm{width:auto;display:inline-block;font-size:13px;padding:8px 16px;border-radius:10px;margin-bottom:0}
+.btn-danger{background:none;border:.5px solid #2a1a1a;color:#663333;width:100%;margin-top:8px;font-family:'DM Sans',sans-serif;font-size:14px;padding:13px;border-radius:12px;cursor:pointer}
+input[type=text],textarea{width:100%;background:#0a0a0a;border:.5px solid #2a2a2a;border-radius:10px;color:#e8e2d9;font-size:15px;padding:12px 14px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .15s}
+input[type=text]:focus,textarea:focus{border-color:#3a3a3a}
+textarea{font-family:'DM Serif Display',serif;font-style:italic;line-height:1.7;resize:none}
+.input-group{width:100%;max-width:320px;margin-bottom:12px}
+.input-big{text-align:center;letter-spacing:.25em;font-size:24px;text-transform:uppercase}
+.app-header{padding:max(20px,env(safe-area-inset-top)) 1.5rem .75rem;display:flex;justify-content:space-between;align-items:flex-start}
+.room-badge{font-size:11px;letter-spacing:.08em;color:#666;background:#1a1a1a;border:.5px solid #2e2e2e;border-radius:20px;padding:4px 10px}
+.notif-dot{width:7px;height:7px;border-radius:50%;background:#4caf8a;display:inline-block;margin-right:5px;vertical-align:middle}
+.tabs{display:flex;padding:0 1.5rem;border-bottom:.5px solid #1e1e1e;margin-bottom:1.5rem;margin-top:10px}
+.tab{flex:0 0 auto;font-size:13px;padding:8px 0;margin-right:24px;cursor:pointer;color:#555;background:none;border:none;border-bottom:1.5px solid transparent;transition:all .15s;font-family:'DM Sans',sans-serif}
+.tab.active{color:#e8e2d9;border-bottom-color:#c8a96e}
+.content{flex:1;overflow-y:auto;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.section-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#444;padding:0 1.5rem;margin-bottom:8px;margin-top:16px}
+.card{background:#141414;border:.5px solid #252525;border-radius:16px;padding:1.25rem;margin:0 1.5rem 1rem}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500}
+.av-a{background:#1e1a2e;color:#9b8fd4}
+.av-b{background:#0e1f1a;color:#4caf8a}
+.badge{font-size:10px;letter-spacing:.05em;border-radius:20px;padding:3px 10px}
+.badge-pending{background:#1e1e1e;color:#444}
+.badge-done{background:#0e1f1a;color:#4caf8a}
+.badge-rated{background:#1e1a2e;color:#9b8fd4}
+.badge-locked{background:#1e1818;color:#c8a96e}
+.card-text{font-family:'DM Serif Display',serif;font-style:italic;font-size:15px;line-height:1.75;color:#c8c0b4}
+.placeholder{font-size:14px;color:#3a3a3a;font-style:italic;line-height:1.7}
+.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:.5px solid #1e1e1e}
+.char-count{font-size:11px;color:#3a3a3a;text-align:right;margin-top:5px}
+.stars{display:flex;gap:6px}
+.star{font-size:24px;color:#2a2a2a;transition:color .1s;user-select:none;line-height:1;cursor:pointer}
+.star.on{color:#c8a96e}
+.star-label{font-size:11px;color:#666;margin-top:5px;min-height:16px}
+.hist-item{padding:1.25rem 1.5rem;border-bottom:.5px solid #1a1a1a}
+.hist-date{font-size:11px;color:#444;margin-bottom:10px;letter-spacing:.04em}
+.hist-who{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.hist-text{font-family:'DM Serif Display',serif;font-style:italic;font-size:14px;color:#777;line-height:1.7}
+.info-card{background:#141414;border:.5px solid #252525;border-radius:16px;padding:1.5rem;margin:0 1.5rem 1rem}
+.info-label{font-size:10px;color:#444;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+.code-big{font-family:'DM Serif Display',serif;font-size:38px;color:#c8a96e;letter-spacing:.12em;margin-bottom:8px}
+.member-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.member-row+.member-row{border-top:.5px solid #1e1e1e}
+.member-info{display:flex;align-items:center;gap:10px}
+.status-dot{width:8px;height:8px;border-radius:50%}
+.dot-on{background:#4caf8a}
+.dot-off{background:#2a2a2a}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-cell{background:#0e0e0e;border-radius:10px;padding:12px}
+.stat-lbl{font-size:11px;color:#444}
+.stat-num{font-family:'DM Serif Display',serif;font-size:26px;color:#c8a96e;margin-top:3px}
+.empty{padding:3rem 1.5rem;text-align:center;color:#333;font-size:14px;line-height:1.8}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;color:#333;font-size:14px}
+.spinner{width:28px;height:28px;border:2px solid #222;border-top-color:#c8a96e;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:max(32px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1e1e1e;border:.5px solid #333;color:#e8e2d9;font-size:13px;padding:10px 20px;border-radius:20px;pointer-events:none;opacity:0;transition:opacity .3s;z-index:999;white-space:nowrap}
+.toast.show{opacity:1}
+.peer-status{font-size:11px;color:#4caf8a;margin-top:5px;min-height:16px}
+</style>
 </head>
 <body>
-<div id="root"></div>
+<div id="app"><div class="loading"><div class="spinner"></div>carregando…</div></div>
+<div class="toast" id="toast"></div>
 
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, off } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-<script type="text/babel">
-const { useState, useEffect, useCallback, useRef } = React;
+// ── Firebase config ──────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAddtdsY3m2lZLWf8Ys5As6TwmFL5XyRSw",
+  authDomain: "satowiki-32e72.firebaseapp.com",
+  databaseURL: "https://satowiki-32e72-default-rtdb.firebaseio.com",
+  projectId: "satowiki-32e72",
+  storageBucket: "satowiki-32e72.firebasestorage.app",
+  messagingSenderId: "980109388873",
+  appId: "1:980109388873:web:d243f988a5a534ed746398"
+};
 
-// ── Storage ──────────────────────────────────────────────────────────
-const S = {
-  get: k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null } catch { return null } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} },
-  del: k => { try { localStorage.removeItem(k) } catch {} }
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
+
+// ── local persistence ────────────────────────────────────────────────────────
+const KEY_USER = 'dc_user_v4';
+const loadUser = () => { try { const v=localStorage.getItem(KEY_USER); return v?JSON.parse(v):null; } catch { return null; } };
+const saveUser = v => { try { localStorage.setItem(KEY_USER, JSON.stringify(v)); } catch {} };
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+const genCode = () => {
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s=''; for(let i=0;i<6;i++) s+=c[Math.floor(Math.random()*c.length)]; return s;
+};
+const todayKey = () => new Date().toISOString().slice(0,10);
+const fmtDate  = iso => new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
+const STAR_LABELS = ['','honesto','tocante','inspirador','marcante','perfeito'];
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-function todayStr() { return new Date().toISOString().slice(0,10) }
-function fmtDate(iso) {
-  return new Date(iso+'T12:00:00').toLocaleDateString('pt-BR', { weekday:'short', day:'numeric', month:'short' })
-}
-function genCode() {
-  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  return Array.from({length:5},()=>c[Math.floor(Math.random()*c.length)]).join('')
-}
-function genId() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36)
-}
-function getRoomKey(code) { return 'room_v1_'+code }
-function loadRoom(code) { return S.get(getRoomKey(code)) }
-function saveRoom(room) { S.set(getRoomKey(room.code), room) }
-function getPartner(room, myId) {
-  const pid = Object.keys(room.members||{}).find(id=>id!==myId)
-  return pid ? room.members[pid] : null
+// ── state ────────────────────────────────────────────────────────────────────
+let state = {
+  user:   loadUser(),
+  room:   null,        // live from Firebase
+  tab:    'hoje',
+  draft:  '',
+  joinCode: '',
+  screen: '',
+  loading: true,
+};
+let roomListener = null;
+
+function setState(patch) {
+  Object.assign(state, typeof patch === 'function' ? patch(state) : patch);
+  if ('user' in patch) saveUser(state.user);
+  render();
 }
 
-const LABELS = ['','honesto','tocante','inspirador','marcante','perfeito']
-
-// ── Stars ─────────────────────────────────────────────────────────────
-function Stars({ value, onChange, readonly=false, small=false }) {
-  return (
-    <div style={{display:'flex', gap: small ? 3 : 10}}>
-      {[1,2,3,4,5].map(i=>(
-        <span key={i}
-          className={`star ${small?'sm':''} ${i<=value?'on':'off'}`}
-          onClick={()=> !readonly && onChange?.(i)}
-          style={{cursor: readonly?'default':'pointer'}}
-        >★</span>
-      ))}
-    </div>
-  )
+// ── Firebase ops ─────────────────────────────────────────────────────────────
+function subscribeRoom(code) {
+  if (roomListener) { off(ref(db, `rooms/${state.user?.roomCode}`)); roomListener = null; }
+  roomListener = onValue(ref(db, `rooms/${code}`), snap => {
+    const data = snap.val();
+    setState({ room: data, loading: false });
+  }, err => {
+    console.error(err);
+    setState({ loading: false });
+  });
 }
 
-// ── Onboarding ────────────────────────────────────────────────────────
-function Onboarding({ onCreate, onJoin }) {
-  const [mode, setMode] = useState(null)
-  const [name, setName] = useState('')
-  const [code, setCode] = useState('')
-  const [err, setErr] = useState('')
+async function createRoom() {
+  setState({ loading: true });
+  const code = genCode();
+  const room = { code, createdAt: new Date().toISOString(), slots: { a: true, b: false }, entries: {} };
+  await set(ref(db, `rooms/${code}`), room);
+  const user = { roomCode: code, slot: 'a' };
+  saveUser(user);
+  state.user = user;
+  state.screen = '';
+  subscribeRoom(code);
+}
 
-  function doCreate() {
-    if (name.trim().length < 2) return setErr('nome muito curto')
-    onCreate(name.trim())
+async function joinRoom() {
+  const code = state.joinCode.trim().toUpperCase();
+  if (code.length < 6) { showToast('Código inválido'); return; }
+  setState({ loading: true });
+  const snap = await get(ref(db, `rooms/${code}`));
+  if (!snap.exists()) { setState({ loading: false }); showToast('Sala não encontrada'); return; }
+  const room = snap.val();
+  if (room.slots?.b) { setState({ loading: false }); showToast('Sala já está cheia'); return; }
+  await update(ref(db, `rooms/${code}/slots`), { b: true });
+  const user = { roomCode: code, slot: 'b' };
+  saveUser(user);
+  state.user = user;
+  state.joinCode = '';
+  state.screen = '';
+  subscribeRoom(code);
+}
+
+async function publishCard() {
+  const text = state.draft.trim();
+  if (text.length < 3) return;
+  const ms = state.user.slot;
+  const today = todayKey();
+  const path = `rooms/${state.user.roomCode}/entries/${today}/${ms}`;
+  await set(ref(db, path), { text, publishedAt: new Date().toISOString(), rating: null });
+  setState({ draft: '' });
+  showToast('Card publicado ✓');
+}
+
+async function rateCard(stars) {
+  const ps = state.user.slot === 'a' ? 'b' : 'a';
+  const today = todayKey();
+  const path = `rooms/${state.user.roomCode}/entries/${today}/${ps}/rating`;
+  await set(ref(db, path), stars);
+  showToast(`${STAR_LABELS[stars]} ★`);
+}
+
+function leaveRoom() {
+  if (!confirm('Sair da sala?')) return;
+  if (roomListener) { off(ref(db, `rooms/${state.user.roomCode}`)); roomListener = null; }
+  saveUser(null);
+  setState({ user: null, room: null, tab: 'hoje', loading: false });
+}
+
+// ── DOM helpers ──────────────────────────────────────────────────────────────
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs||{})) {
+    if (k === 'class') e.className = v;
+    else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else e.setAttribute(k, v);
   }
-  function doJoin() {
-    if (name.trim().length < 2) return setErr('nome muito curto')
-    if (code.trim().length < 4) return setErr('código inválido')
-    const result = onJoin(name.trim(), code.trim().toUpperCase())
-    if (result === 'notfound') setErr('sala não encontrada')
-    else if (result === 'full') setErr('sala já está cheia')
+  for (const child of children.flat()) {
+    if (child == null || child === false) continue;
+    e.append(typeof child === 'string' || typeof child === 'number'
+      ? document.createTextNode(String(child)) : child);
   }
-
-  return (
-    <div className="screen" style={{justifyContent:'center'}}>
-      <div className="pad au" style={{width:'100%', maxWidth:420, margin:'0 auto'}}>
-
-        {!mode && <>
-          <div style={{fontFamily:'var(--serif)', fontSize:52, lineHeight:1.05, marginBottom:14}}>
-            dois<br/>cards
-          </div>
-          <p style={{fontSize:15, color:'var(--text2)', lineHeight:1.6, marginBottom:44}}>
-            uma sala para dois.<br/>dois textos por dia.
-          </p>
-          <div className="au2" style={{display:'flex', flexDirection:'column', gap:12}}>
-            <button className="btn-main" onClick={()=>{setMode('create');setErr('')}}>criar sala</button>
-            <button className="btn-ghost" onClick={()=>{setMode('join');setErr('')}}>entrar em sala</button>
-          </div>
-        </>}
-
-        {mode === 'create' && <div className="au">
-          <button className="btn-back" onClick={()=>setMode(null)} style={{marginBottom:28}}>← voltar</button>
-          <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, marginBottom:24}}>nova sala</h2>
-          <label className="label">seu nome</label>
-          <input type="text" placeholder="como quer ser chamado?" value={name}
-            onChange={e=>{setName(e.target.value);setErr('')}} maxLength={24} autoFocus />
-          {err && <p className="err">{err}</p>}
-          <button className="btn-main" style={{marginTop:20}} onClick={doCreate}>criar</button>
-        </div>}
-
-        {mode === 'join' && <div className="au">
-          <button className="btn-back" onClick={()=>setMode(null)} style={{marginBottom:28}}>← voltar</button>
-          <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, marginBottom:24}}>entrar na sala</h2>
-          <label className="label">seu nome</label>
-          <input type="text" placeholder="como quer ser chamado?" value={name}
-            onChange={e=>{setName(e.target.value);setErr('')}} maxLength={24} autoFocus style={{marginBottom:16}} />
-          <label className="label">código da sala</label>
-          <input type="text" placeholder="ex: AB4C2"
-            value={code}
-            onChange={e=>{setCode(e.target.value);setErr('')}}
-            maxLength={6}
-            style={{letterSpacing:'0.2em', textTransform:'uppercase'}} />
-          {err && <p className="err">{err}</p>}
-          <button className="btn-main" style={{marginTop:20}} onClick={doJoin}>entrar</button>
-        </div>}
-
-      </div>
-    </div>
-  )
+  return e;
 }
 
-// ── Home ──────────────────────────────────────────────────────────────
-function Home({ room, user, onWrite, onRate, onHistory, onLeave }) {
-  const today = todayStr()
-  const myCard = room.cards?.[today]?.[user.id]
-  const partner = getPartner(room, user.id)
-  const partnerCard = partner ? room.cards?.[today]?.[partner.id] : null
-  const myRating = room.ratings?.[today]?.[user.id]
-  const canSeePartner = !!myCard
-
-  return (
-    <div className="screen">
-      <div className="scroll">
-        <div className="pad au" style={{paddingTop:56, paddingBottom:8}}>
-          <div className="room-badge">sala {room.code}</div>
-          <h1 style={{fontFamily:'var(--serif)', fontSize:30, fontWeight:400, marginBottom:6}}>{fmtDate(today)}</h1>
-          {partner
-            ? <p style={{fontSize:14, color:'var(--text2)', display:'flex', alignItems:'center', gap:8}}>
-                <span className="dot-pulse"/>com {partner.name}
-              </p>
-            : <p style={{fontSize:14, color:'var(--text3)'}}>
-                compartilhe o código <strong style={{color:'var(--accent)', fontWeight:400}}>{room.code}</strong> com alguém
-              </p>
-          }
-        </div>
-
-        <div className="pad" style={{paddingTop:24, paddingBottom:24, display:'flex', flexDirection:'column', gap:14}}>
-
-          {/* My card */}
-          <div className="card au1">
-            <div className="card-meta">
-              <span className="card-user">eu</span>
-              {myCard
-                ? <span className="badge badge-green">publicado</span>
-                : <span className="badge badge-dim">pendente</span>
-              }
-            </div>
-            {myCard
-              ? <p className="card-text">"{myCard.text}"</p>
-              : <>
-                  <p className="card-placeholder">seu espaço de hoje</p>
-                  <button className="btn-sm" style={{marginTop:16}} onClick={onWrite}>escrever agora</button>
-                </>
-            }
-          </div>
-
-          {/* Partner card */}
-          <div className="card au2">
-            <div className="card-meta">
-              <span className="card-user">{partner ? partner.name : 'parceiro'}</span>
-              {partnerCard
-                ? <span className="badge badge-green">publicado</span>
-                : <span className="badge badge-dim">{partner ? 'aguardando' : 'vazio'}</span>
-              }
-            </div>
-
-            {!partner && <p className="card-placeholder">sala aguardando parceiro</p>}
-
-            {partner && !partnerCard && <p className="card-placeholder">ainda não publicou hoje</p>}
-
-            {partner && partnerCard && !canSeePartner && (
-              <p className="card-placeholder">publique seu card para ler o de {partner.name}</p>
-            )}
-
-            {partner && partnerCard && canSeePartner && <>
-              <p className="card-text">"{partnerCard.text}"</p>
-              <hr className="divider" />
-              {myRating
-                ? <div style={{display:'flex', alignItems:'center', gap:10}}>
-                    <Stars value={myRating} readonly small />
-                    <span style={{fontSize:13, color:'var(--accent)', fontStyle:'italic'}}>{LABELS[myRating]}</span>
-                  </div>
-                : <button className="btn-sm" onClick={onRate}>avaliar</button>
-              }
-            </>}
-          </div>
-
-        </div>
-      </div>
-
-      <nav className="nav">
-        <button className="nav-btn" onClick={onHistory}>histórico</button>
-        <button className="nav-btn" style={{fontSize:12, color:'var(--text3)'}} onClick={onLeave}>sair da sala</button>
-      </nav>
-    </div>
-  )
-}
-
-// ── Write ─────────────────────────────────────────────────────────────
-function Write({ onSubmit, onBack }) {
-  const [text, setText] = useState('')
-  const max = 280
-  const ok = text.trim().length >= 3
-
-  return (
-    <div className="screen">
-      <div className="scroll pad au" style={{paddingTop:52}}>
-        <button className="btn-back" onClick={onBack}>← voltar</button>
-        <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, margin:'22px 0 6px'}}>seu card de hoje</h2>
-        <p style={{fontSize:14, color:'var(--text2)', lineHeight:1.6, marginBottom:24}}>
-          uma frase, um pensamento, o que sentiu hoje
-        </p>
-        <textarea
-          placeholder="comece a escrever…"
-          value={text}
-          onChange={e=>setText(e.target.value.slice(0,max))}
-          rows={8}
-          autoFocus
-        />
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:10, marginBottom:24}}>
-          <span style={{fontSize:12, color:'var(--text3)'}}>{text.length}/{max}</span>
-          <button
-            className="btn-main"
-            style={{width:'auto', padding:'11px 28px', opacity: ok?1:.4}}
-            onClick={()=> ok && onSubmit(text.trim())}
-          >publicar</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Rate ──────────────────────────────────────────────────────────────
-function Rate({ partnerName, cardText, onSubmit, onBack }) {
-  const [rating, setRating] = useState(0)
-
-  return (
-    <div className="screen">
-      <div className="scroll pad au" style={{paddingTop:52}}>
-        <button className="btn-back" onClick={onBack}>← voltar</button>
-        <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, margin:'22px 0 4px'}}>avaliação</h2>
-        <p style={{fontSize:14, color:'var(--text2)', marginBottom:24}}>card de {partnerName}</p>
-
-        <div className="card" style={{marginBottom:32}}>
-          <p className="card-text">"{cardText}"</p>
-        </div>
-
-        <div style={{display:'flex', justifyContent:'center', marginBottom:14}}>
-          <Stars value={rating} onChange={setRating} />
-        </div>
-
-        {rating > 0 && (
-          <p style={{textAlign:'center', fontFamily:'var(--serif)', fontSize:20, fontStyle:'italic', color:'var(--accent)', marginBottom:28, animation:'fadeIn .3s ease'}}>
-            {LABELS[rating]}
-          </p>
-        )}
-
-        <button
-          className="btn-main"
-          style={{opacity: rating===0?.4:1}}
-          onClick={()=> rating>0 && onSubmit(rating)}
-        >confirmar avaliação</button>
-      </div>
-    </div>
-  )
-}
-
-// ── History ───────────────────────────────────────────────────────────
-function History({ room, userId, onBack }) {
-  const partner = getPartner(room, userId)
-  const today = todayStr()
-  const days = Object.keys(room.cards||{}).sort().reverse().filter(d=>d!==today)
-
-  return (
-    <div className="screen">
-      <div className="scroll pad au" style={{paddingTop:52, paddingBottom:32}}>
-        <button className="btn-back" onClick={onBack}>← voltar</button>
-        <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, margin:'22px 0 28px'}}>histórico</h2>
-
-        {days.length === 0 && (
-          <p style={{color:'var(--text3)', fontStyle:'italic', fontSize:15}}>nenhum card anterior ainda</p>
-        )}
-
-        {days.map(day => {
-          const mc = room.cards[day]?.[userId]
-          const pc = partner ? room.cards[day]?.[partner.id] : null
-          const mr = room.ratings?.[day]?.[userId]
-          const pr = partner ? room.ratings?.[day]?.[partner.id] : null
-          return (
-            <div key={day} style={{marginBottom:28}}>
-              <div style={{fontSize:11, color:'var(--text3)', letterSpacing:'.07em', textTransform:'uppercase', marginBottom:10}}>
-                {fmtDate(day)}
-              </div>
-              {mc && <div className="card" style={{marginBottom:8}}>
-                <div className="card-meta">
-                  <span className="card-user">eu</span>
-                  {pr && <Stars value={pr} readonly small />}
-                </div>
-                <p className="card-text" style={{fontSize:16}}>"{mc.text}"</p>
-              </div>}
-              {pc && <div className="card">
-                <div className="card-meta">
-                  <span className="card-user">{partner?.name||'parceiro'}</span>
-                  {mr && <Stars value={mr} readonly small />}
-                </div>
-                <p className="card-text" style={{fontSize:16}}>"{pc.text}"</p>
-              </div>}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ── App ───────────────────────────────────────────────────────────────
-function App() {
-  const [screen, setScreen] = useState('loading')
-  const [room, setRoom] = useState(null)
-  const [user, setUser] = useState(null)
-
-  useEffect(()=>{
-    const u = S.get('user')
-    const rc = S.get('roomCode')
-    if (u && rc) {
-      const r = loadRoom(rc)
-      if (r && r.members?.[u.id]) {
-        setUser(u); setRoom(r); setScreen('home'); return
-      }
+function makeStars(value, onChange, readOnly) {
+  const wrap = el('div',{});
+  const row  = el('div',{class:'stars'});
+  const lbl  = el('div',{class:'star-label'}, value ? STAR_LABELS[value] : (readOnly ? '' : 'toque para avaliar'));
+  for (let n=1; n<=5; n++) {
+    const s = el('span',{class:`star${n<=value?' on':''}`},'★');
+    if (!readOnly && onChange) {
+      s.addEventListener('mouseenter', () => {
+        row.querySelectorAll('.star').forEach((st,i)=>st.className='star'+(i<n?' on':''));
+        lbl.textContent = STAR_LABELS[n];
+      });
+      s.addEventListener('mouseleave', () => {
+        row.querySelectorAll('.star').forEach((st,i)=>st.className='star'+(i<value?' on':''));
+        lbl.textContent = value ? STAR_LABELS[value] : 'toque para avaliar';
+      });
+      s.addEventListener('click', () => onChange(n));
     }
-    setScreen('onboarding')
-  },[])
-
-  // Poll for changes (partner on same device or another tab)
-  useEffect(()=>{
-    if (!room) return
-    const id = setInterval(()=>{
-      const fresh = loadRoom(room.code)
-      if (fresh && JSON.stringify(fresh) !== JSON.stringify(room)) setRoom(fresh)
-    }, 2500)
-    return ()=>clearInterval(id)
-  },[room])
-
-  function handleCreate(name) {
-    const id = genId()
-    const code = genCode()
-    const u = { id, name }
-    const r = { code, members:{[id]:{id,name}}, cards:{}, ratings:{}, createdAt:new Date().toISOString() }
-    saveRoom(r); S.set('user',u); S.set('roomCode',code)
-    setUser(u); setRoom(r); setScreen('home')
+    row.append(s);
   }
-
-  function handleJoin(name, code) {
-    const existing = loadRoom(code)
-    if (!existing) return 'notfound'
-    if (Object.keys(existing.members||{}).length >= 2) return 'full'
-    const id = genId()
-    const u = { id, name }
-    existing.members[id] = {id,name}
-    saveRoom(existing); S.set('user',u); S.set('roomCode',code)
-    setUser(u); setRoom(existing); setScreen('home')
-  }
-
-  function handleWrite(text) {
-    const today = todayStr()
-    const r = { ...room }
-    if (!r.cards[today]) r.cards[today] = {}
-    r.cards[today][user.id] = { text, at: new Date().toISOString() }
-    saveRoom(r); setRoom(r); setScreen('home')
-  }
-
-  function handleRate(rating) {
-    const today = todayStr()
-    const r = { ...room }
-    if (!r.ratings[today]) r.ratings[today] = {}
-    r.ratings[today][user.id] = rating
-    saveRoom(r); setRoom(r); setScreen('home')
-  }
-
-  function handleLeave() {
-    if (!confirm('Sair da sala? Você pode entrar novamente com o código.')) return
-    S.del('user'); S.del('roomCode')
-    setUser(null); setRoom(null); setScreen('onboarding')
-  }
-
-  if (screen === 'loading') return (
-    <div className="screen" style={{alignItems:'center', justifyContent:'center'}}>
-      <div style={{fontFamily:'var(--serif)', fontSize:22, color:'var(--text3)', animation:'pulse 1.5s ease infinite'}}>
-        dois cards
-      </div>
-    </div>
-  )
-
-  if (screen === 'onboarding') return <Onboarding onCreate={handleCreate} onJoin={handleJoin} />
-
-  if (screen === 'home') return (
-    <Home room={room} user={user}
-      onWrite={()=>setScreen('write')}
-      onRate={()=>setScreen('rate')}
-      onHistory={()=>setScreen('history')}
-      onLeave={handleLeave}
-    />
-  )
-
-  if (screen === 'write') return <Write onSubmit={handleWrite} onBack={()=>setScreen('home')} />
-
-  if (screen === 'rate') {
-    const partner = getPartner(room, user.id)
-    const partnerCard = room.cards?.[todayStr()]?.[partner?.id]
-    return <Rate partnerName={partner?.name} cardText={partnerCard?.text} onSubmit={handleRate} onBack={()=>setScreen('home')} />
-  }
-
-  if (screen === 'history') return <History room={room} userId={user.id} onBack={()=>setScreen('home')} />
-
-  return null
+  wrap.append(row, lbl);
+  return wrap;
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />)
-</script>
+// ── render sections ───────────────────────────────────────────────────────────
+function renderOnboarding() {
+  const { screen, joinCode } = state;
+  const wrap = el('div',{class:'screen'});
+  if (screen === '') {
+    wrap.append(
+      el('div',{class:'logo'},'dois cards'),
+      el('div',{class:'sub'},'uma sala. dois textos.\ntodo dia.'),
+      el('div',{style:{marginTop:'48px',width:'100%',maxWidth:'320px'}},
+        el('button',{class:'btn btn-gold',onClick:createRoom},'criar sala'),
+        el('button',{class:'btn btn-outline',onClick:()=>setState({screen:'join'})},'entrar com código')
+      )
+    );
+  } else if (screen === 'join') {
+    const inp = el('input',{type:'text',class:'input-big',placeholder:'ABC123',maxlength:'6',value:joinCode,autocomplete:'off',autocorrect:'off',autocapitalize:'characters'});
+    inp.addEventListener('input', e => { state.joinCode = e.target.value; });
+    wrap.append(
+      el('div',{class:'serif',style:{fontSize:'26px',color:'#e8e2d9',marginBottom:'8px'}},'entrar na sala'),
+      el('div',{class:'sub'},'insira o código da sala'),
+      el('div',{style:{marginTop:'32px',width:'100%',maxWidth:'320px'}},
+        el('div',{class:'input-group'}, inp),
+        el('button',{class:'btn btn-gold',onClick:joinRoom},'entrar'),
+        el('button',{class:'btn btn-outline',onClick:()=>setState({screen:''})},'voltar')
+      )
+    );
+    setTimeout(()=>inp.focus(),50);
+  }
+  return wrap;
+}
 
-<script>
-// Service Worker for PWA / offline
-if ('serviceWorker' in navigator) {
-  const sw = `
-    const CACHE = 'doiscards-v1';
-    const URLS = ['/'];
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)));
-      self.skipWaiting();
-    });
-    self.addEventListener('activate', e => {
-      e.waitUntil(caches.keys().then(keys =>
-        Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
-      ));
-      self.clients.claim();
-    });
-    self.addEventListener('fetch', e => {
-      e.respondWith(
-        fetch(e.request).catch(() => caches.match(e.request))
-      );
-    });
-  `;
-  const blob = new Blob([sw], { type: 'application/javascript' });
-  const url = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(url).catch(() => {});
+function renderHoje() {
+  const frag = document.createDocumentFragment();
+  const r = state.room;
+  const ms = state.user.slot;
+  const ps = ms === 'a' ? 'b' : 'a';
+  const today = todayKey();
+  const entry = r?.entries?.[today] || {};
+  const mc = entry[ms];
+  const pc = entry[ps];
+  const pj = r?.slots?.b;
+  const mr = pc?.rating || 0;
+
+  // my card
+  frag.append(el('div',{class:'section-label'},'seu card'));
+  const cardA = el('div',{class:'card'});
+  cardA.append(el('div',{class:'card-header'},
+    el('div',{class:'avatar av-a'},'eu'),
+    el('div',{class:`badge badge-${mc?'done':'pending'}`}, mc?'publicado':'aguardando')
+  ));
+  if (mc) {
+    cardA.append(el('div',{class:'card-text'},`"${mc.text}"`));
+  } else {
+    const ta = el('textarea',{rows:'4',maxlength:'280',placeholder:'escreva algo para hoje…'});
+    ta.value = state.draft;
+    const cc = el('div',{class:'char-count'},`${state.draft.length}/280`);
+    ta.addEventListener('input', e => { state.draft = e.target.value; cc.textContent = `${e.target.value.length}/280`; });
+    cardA.append(ta, cc,
+      el('div',{class:'card-footer'},
+        el('span',{style:{fontSize:'12px',color:'#333'}},'visível ao parceiro após publicar'),
+        el('button',{class:'btn btn-gold btn-sm',onClick:publishCard},'publicar')
+      )
+    );
+  }
+  frag.append(cardA);
+
+  // peer card
+  frag.append(el('div',{class:'section-label',style:{marginTop:'8px'}},'card do parceiro'));
+  const cardB = el('div',{class:'card'});
+  const bType = !pj?'locked':pc?(mr?'rated':'done'):'pending';
+  const bText = !pj?'sala aberta':pc?(mr?`★ ${mr}`:'publicado'):'aguardando';
+  cardB.append(el('div',{class:'card-header'},
+    el('div',{class:'avatar av-b'},'p'),
+    el('div',{class:`badge badge-${bType}`},bText)
+  ));
+  if (!pj) {
+    cardB.append(
+      el('div',{class:'placeholder'},'compartilhe o código '),
+      el('strong',{style:{color:'#c8a96e',fontSize:'14px'}}, state.user.roomCode),
+      el('div',{class:'placeholder',style:{marginTop:'6px'}},' com seu parceiro para começar.')
+    );
+  } else if (!pc) {
+    cardB.append(el('div',{class:'placeholder'},'seu parceiro ainda não publicou o card de hoje.'));
+    if (!mc) cardB.append(el('div',{class:'placeholder',style:{marginTop:'8px',fontSize:'12px',color:'#2a2a2a'}},'(publique o seu primeiro)'));
+  } else if (!mc) {
+    cardB.append(el('div',{class:'placeholder'},'publique seu card primeiro para ver o do parceiro.'));
+  } else {
+    cardB.append(el('div',{class:'card-text'},`"${pc.text}"`));
+    cardB.append(el('div',{class:'card-footer'}, makeStars(mr, mr?null:rateCard, !!mr)));
+  }
+  frag.append(cardB);
+  return frag;
+}
+
+function renderHistorico() {
+  const r = state.room;
+  const ms = state.user.slot;
+  const ps = ms === 'a' ? 'b' : 'a';
+  const entries = Object.entries(r?.entries||{})
+    .filter(([d])=>d!==todayKey())
+    .sort((a,b)=>b[0].localeCompare(a[0]));
+
+  if (!entries.length) return el('div',{class:'empty'},'o histórico aparecerá aqui\nconforme os dias passarem.');
+  const frag = document.createDocumentFragment();
+  for (const [date, entry] of entries) {
+    const mine = entry[ms]; const peer = entry[ps];
+    const item = el('div',{class:'hist-item'}, el('div',{class:'hist-date'}, fmtDate(date)));
+    if (mine) item.append(el('div',{style:{marginBottom:peer?'12px':'0'}},
+      el('div',{class:'hist-who'},'você'),
+      el('div',{class:'hist-text'},`"${mine.text}"`)
+    ));
+    if (peer) item.append(el('div',{},
+      el('div',{class:'hist-who'}, peer.rating?`parceiro · ★ ${peer.rating}`:'parceiro'),
+      el('div',{class:'hist-text'},`"${peer.text}"`)
+    ));
+    frag.append(item);
+  }
+  return frag;
+}
+
+function renderSala() {
+  const r = state.room;
+  const ms = state.user.slot;
+  const ps = ms === 'a' ? 'b' : 'a';
+  const pj = r?.slots?.b;
+  const allE = Object.values(r?.entries||{});
+  const totalDays  = Object.keys(r?.entries||{}).length;
+  const totalCards = allE.reduce((a,e)=>a+(e.a?1:0)+(e.b?1:0),0);
+  const ratings    = allE.map(e=>e[ps]?.rating).filter(Boolean);
+  const avg = ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):'—';
+
+  const frag = document.createDocumentFragment();
+  frag.append(
+    el('div',{class:'info-card'},
+      el('div',{class:'info-label'},'código da sala'),
+      el('div',{class:'code-big'}, state.user.roomCode),
+      el('div',{style:{fontSize:'13px',color:'#555',lineHeight:'1.6'}},
+        'Compartilhe este código com seu parceiro. A sala comporta apenas duas pessoas.'
+      )
+    ),
+    el('div',{class:'info-card'},
+      el('div',{class:'info-label'},'membros'),
+      el('div',{class:'member-row'},
+        el('div',{class:'member-info'}, el('div',{class:'avatar av-a'},'eu'),
+          el('span',{style:{fontSize:'14px',color:'#c8c0b4'}},'você (slot A)')),
+        el('div',{class:'status-dot dot-on'})
+      ),
+      el('div',{class:'member-row'},
+        el('div',{class:'member-info'}, el('div',{class:'avatar av-b'},'p'),
+          el('span',{style:{fontSize:'14px',color:pj?'#c8c0b4':'#333'}}, pj?'parceiro (slot B)':'aguardando...')),
+        el('div',{class:`status-dot ${pj?'dot-on':'dot-off'}`})
+      )
+    ),
+    el('div',{class:'info-card'},
+      el('div',{class:'info-label'},'estatísticas'),
+      el('div',{class:'stat-grid'},
+        ...[['dias registrados',totalDays],['cards publicados',totalCards],['avaliações dadas',ratings.length],['média recebida',avg]].map(([l,v])=>
+          el('div',{class:'stat-cell'}, el('div',{class:'stat-lbl'},l), el('div',{class:'stat-num'},String(v)))
+        )
+      )
+    ),
+    el('div',{style:{padding:'0 1.5rem 2rem'}},
+      el('button',{class:'btn-danger',onClick:leaveRoom},'sair da sala')
+    )
+  );
+  return frag;
+}
+
+// ── main render ───────────────────────────────────────────────────────────────
+function render() {
+  const root = document.getElementById('app');
+  root.innerHTML = '';
+
+  if (state.loading) {
+    root.append(el('div',{class:'loading'}, el('div',{class:'spinner'}), 'carregando…'));
+    return;
+  }
+
+  if (!state.user) { root.append(renderOnboarding()); return; }
+
+  // header
+  root.append(el('div',{class:'app-header'},
+    el('div',{},
+      el('div',{class:'serif',style:{fontSize:'24px',color:'#c8a96e'}},'dois cards'),
+      el('div',{style:{fontSize:'12px',color:'#444',marginTop:'3px'}},
+        el('span',{class:'notif-dot'}), fmtDate(todayKey())
+      )
+    ),
+    el('div',{style:{textAlign:'right'}},
+      el('div',{class:'room-badge'}, state.user.roomCode),
+      !state.room?.slots?.b
+        ? el('div',{style:{fontSize:'11px',color:'#c8a96e',marginTop:'5px'}},'aguardando parceiro')
+        : el('div',{style:{fontSize:'11px',color:'#4caf8a',marginTop:'5px'}},'sala completa ✓')
+    )
+  ));
+
+  // tabs
+  const tabBar = el('div',{class:'tabs'});
+  for (const t of ['hoje','histórico','sala']) {
+    tabBar.append(el('button',{class:`tab${state.tab===t?' active':''}`,onClick:()=>setState({tab:t})},t));
+  }
+  root.append(tabBar);
+
+  const content = el('div',{class:'content'});
+  if (state.tab==='hoje')           content.append(renderHoje());
+  else if (state.tab==='histórico') content.append(renderHistorico());
+  else                              content.append(renderSala());
+  root.append(content);
+}
+
+// ── boot ──────────────────────────────────────────────────────────────────────
+if (state.user?.roomCode) {
+  subscribeRoom(state.user.roomCode);
+} else {
+  setState({ loading: false });
 }
 </script>
 </body>
