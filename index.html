@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#0e0e0e"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="dois cards"/>
-<title>dois cards</title>
+<meta name="apple-mobile-web-app-title" content="SatoWiki"/>
+<title>SatoWiki</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
@@ -53,10 +53,11 @@ textarea{font-family:'DM Serif Display',serif;font-style:italic;line-height:1.7;
 .placeholder{font-size:14px;color:#3a3a3a;font-style:italic;line-height:1.7}
 .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:.5px solid #1e1e1e}
 .char-count{font-size:11px;color:#3a3a3a;text-align:right;margin-top:5px}
-.stars{display:flex;gap:6px}
-.star{font-size:24px;color:#2a2a2a;transition:color .1s;user-select:none;line-height:1;cursor:pointer}
-.star.on{color:#c8a96e}
-.star-label{font-size:11px;color:#666;margin-top:5px;min-height:16px}
+.emojis{display:flex;gap:6px;flex-wrap:wrap}
+.emoji-btn{font-size:20px;background:none;border:.5px solid #252525;border-radius:12px;padding:7px 10px;cursor:pointer;transition:all .15s;line-height:1;opacity:.4;font-family:inherit}
+.emoji-btn.on{opacity:1;border-color:#c8a96e;background:#1a1508}
+.emoji-btn:active{transform:scale(.88)}
+.emoji-label{font-size:11px;color:#666;margin-top:6px;min-height:16px}
 .hist-item{padding:1.25rem 1.5rem;border-bottom:.5px solid #1a1a1a}
 .hist-date{font-size:11px;color:#444;margin-bottom:10px;letter-spacing:.04em}
 .hist-who{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
@@ -115,12 +116,44 @@ const genCode = () => {
 };
 const todayKey = () => new Date().toISOString().slice(0,10);
 const fmtDate  = iso => new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
-const STAR_LABELS = ['','honesto','tocante','inspirador','marcante','perfeito'];
+const EMOJIS = ['❤️','😭','🤯','😂','✨'];
+const EMOJI_LABELS = ['amor','emocionou','surpreendeu','deu risada','favorito'];
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// ── push notifications ────────────────────────────────────────────────────────
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendNotif(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body: body, icon: '/favicon.ico' });
+  }
+}
+
+function scheduleDaily() {
+  // Check every minute if it's a new day and cards are fresh
+  setInterval(function() {
+    const lastNotif = localStorage.getItem('dc_last_notif');
+    const today = todayKey();
+    if (lastNotif !== today && state.user) {
+      const r = state.room;
+      const ms = state.user.slot;
+      const entry = (r && r.entries && r.entries[today]) || {};
+      if (!entry[ms]) {
+        // Card not yet published today — notify
+        localStorage.setItem('dc_last_notif', today);
+        sendNotif('SatoWiki 📝', 'Seu card do dia está disponível. Escreva algo.');
+      }
+    }
+  }, 60000);
 }
 
 // ── state ─────────────────────────────────────────────────────────────────────
@@ -145,8 +178,21 @@ function setState(patch) {
 function subscribeRoom(code) {
   if (roomRef) roomRef.off();
   roomRef = db.ref('rooms/' + code);
+  var prevPeerCard = null;
   roomRef.on('value', snap => {
-    setState({ room: snap.val(), loading: false });
+    const data = snap.val();
+    if (data && state.user) {
+      const ps = state.user.slot === 'a' ? 'b' : 'a';
+      const today = todayKey();
+      const entry = (data.entries && data.entries[today]) || {};
+      const newPeerCard = entry[ps];
+      // Notify when peer publishes their card
+      if (!prevPeerCard && newPeerCard && state.room) {
+        sendNotif('SatoWiki 💌', 'Seu parceiro publicou o card de hoje!');
+      }
+      prevPeerCard = newPeerCard;
+    }
+    setState({ room: data, loading: false });
   }, () => setState({ loading: false }));
 }
 
@@ -161,6 +207,8 @@ function createRoom() {
     saveUser(user);
     state.user = user;
     state.screen = '';
+    requestNotifPermission();
+    scheduleDaily();
     subscribeRoom(code);
   });
 }
@@ -177,6 +225,8 @@ function joinRoom() {
       state.user = user;
       state.joinCode = '';
       state.screen = '';
+      requestNotifPermission();
+      scheduleDaily();
       subscribeRoom(code);
     });
   });
@@ -197,7 +247,7 @@ function rateCard(stars) {
   const today = todayKey();
   db.ref('rooms/' + state.user.roomCode + '/entries/' + today + '/' + ps + '/rating')
     .set(stars)
-    .then(() => showToast(STAR_LABELS[stars] + ' ★'));
+    .then(() => showToast(EMOJIS[stars-1] + ' ' + EMOJI_LABELS[stars-1]));
 }
 
 function leaveRoom() {
@@ -226,24 +276,19 @@ function el(tag, attrs) {
   return e;
 }
 
-function makeStars(value, onChange, readOnly) {
+function makeEmojis(value, onChange, readOnly) {
   const wrap = el('div', {});
-  const row  = el('div', {class:'stars'});
-  const lbl  = el('div', {class:'star-label'}, value ? STAR_LABELS[value] : (readOnly ? '' : 'toque para avaliar'));
+  const row  = el('div', {class:'emojis'});
+  const lbl  = el('div', {class:'emoji-label'}, value ? EMOJI_LABELS[value-1] : (readOnly ? '' : 'como foi?'));
   for (let n=1; n<=5; n++) {
-    const s = el('span', {class:'star' + (n<=value?' on':'')}, '★');
+    const btn = el('button', {class:'emoji-btn' + (n===value?' on':'')}, EMOJIS[n-1]);
     if (!readOnly && onChange) {
-      s.addEventListener('mouseenter', function() {
-        row.querySelectorAll('.star').forEach(function(st,i){ st.className='star'+(i<n?' on':''); });
-        lbl.textContent = STAR_LABELS[n];
-      });
-      s.addEventListener('mouseleave', function() {
-        row.querySelectorAll('.star').forEach(function(st,i){ st.className='star'+(i<value?' on':''); });
-        lbl.textContent = value ? STAR_LABELS[value] : 'toque para avaliar';
-      });
-      s.addEventListener('click', function(){ onChange(n); });
+      btn.addEventListener('click', function(){ onChange(n); });
+    } else {
+      btn.setAttribute('disabled','');
+      btn.style.cursor = 'default';
     }
-    row.append(s);
+    row.append(btn);
   }
   wrap.append(row, lbl);
   return wrap;
@@ -254,7 +299,7 @@ function renderOnboarding() {
   const wrap = el('div', {class:'screen'});
   if (state.screen === '') {
     wrap.append(
-      el('div', {class:'logo'}, 'dois cards'),
+      el('div', {class:'logo'}, 'SatoWiki'),
       el('div', {class:'sub'}, 'uma sala. dois textos.\ntodo dia.'),
       el('div', {style:{marginTop:'48px',width:'100%',maxWidth:'320px'}},
         el('button', {class:'btn btn-gold', onClick:createRoom}, 'criar sala'),
@@ -318,7 +363,7 @@ function renderHoje() {
   frag.append(el('div', {class:'section-label', style:{marginTop:'8px'}}, 'card do parceiro'));
   const cardB = el('div', {class:'card'});
   const bType = !pj ? 'locked' : pc ? (mr ? 'rated' : 'done') : 'pending';
-  const bText = !pj ? 'sala aberta' : pc ? (mr ? '★ ' + mr : 'publicado') : 'aguardando';
+  const bText = !pj ? 'sala aberta' : pc ? (mr ? EMOJIS[mr-1] : 'publicado') : 'aguardando';
   cardB.append(el('div', {class:'card-header'},
     el('div', {class:'avatar av-b'}, 'p'),
     el('div', {class:'badge badge-' + bType}, bText)
@@ -333,7 +378,7 @@ function renderHoje() {
     cardB.append(el('div', {class:'placeholder'}, 'publique seu card primeiro para ver o do parceiro.'));
   } else {
     cardB.append(el('div', {class:'card-text'}, '"' + pc.text + '"'));
-    cardB.append(el('div', {class:'card-footer'}, makeStars(mr, mr ? null : rateCard, !!mr)));
+    cardB.append(el('div', {class:'card-footer'}, makeEmojis(mr, mr ? null : rateCard, !!mr)));
   }
   frag.append(cardB);
   return frag;
@@ -358,7 +403,7 @@ function renderHistorico() {
       el('div', {class:'hist-text'}, '"' + mine.text + '"')
     ));
     if (peer) item.append(el('div', {},
-      el('div', {class:'hist-who'}, peer.rating ? 'parceiro · ★ ' + peer.rating : 'parceiro'),
+      el('div', {class:'hist-who'}, peer.rating ? 'parceiro ' + EMOJIS[peer.rating-1] : 'parceiro'),
       el('div', {class:'hist-text'}, '"' + peer.text + '"')
     ));
     frag.append(item);
@@ -375,7 +420,10 @@ function renderSala() {
   const totalDays  = Object.keys((r && r.entries) || {}).length;
   const totalCards = allE.reduce(function(a,e){ return a+(e.a?1:0)+(e.b?1:0); }, 0);
   const ratings    = allE.map(function(e){ return e[ps] && e[ps].rating; }).filter(Boolean);
-  const avg = ratings.length ? (ratings.reduce(function(a,b){return a+b;},0)/ratings.length).toFixed(1) : '—';
+  var emojiCounts = [0,0,0,0,0];
+  ratings.forEach(function(r){ if(r>=1&&r<=5) emojiCounts[r-1]++; });
+  var maxCount = Math.max.apply(null, emojiCounts);
+  var topEmoji = maxCount > 0 ? EMOJIS[emojiCounts.indexOf(maxCount)] : '—';
 
   const frag = document.createDocumentFragment();
   frag.append(
@@ -404,7 +452,7 @@ function renderSala() {
         el('div',{class:'stat-cell'}, el('div',{class:'stat-lbl'},'dias registrados'), el('div',{class:'stat-num'},String(totalDays))),
         el('div',{class:'stat-cell'}, el('div',{class:'stat-lbl'},'cards publicados'), el('div',{class:'stat-num'},String(totalCards))),
         el('div',{class:'stat-cell'}, el('div',{class:'stat-lbl'},'avaliações dadas'), el('div',{class:'stat-num'},String(ratings.length))),
-        el('div',{class:'stat-cell'}, el('div',{class:'stat-lbl'},'média recebida'), el('div',{class:'stat-num'},String(avg)))
+        el('div',{class:'stat-cell'}, el('div',{class:'stat-lbl'},'reação favorita'), el('div',{class:'stat-num',style:{fontSize:'28px'}},topEmoji))
       )
     ),
     el('div', {style:{padding:'0 1.5rem 2rem'}},
@@ -428,7 +476,7 @@ function render() {
 
   root.append(el('div', {class:'app-header'},
     el('div', {},
-      el('div', {class:'serif', style:{fontSize:'24px',color:'#c8a96e'}}, 'dois cards'),
+      el('div', {class:'serif', style:{fontSize:'24px',color:'#c8a96e'}}, 'SatoWiki'),
       el('div', {style:{fontSize:'12px',color:'#444',marginTop:'3px'}},
         el('span', {class:'notif-dot'}), fmtDate(todayKey()))
     ),
@@ -455,6 +503,7 @@ function render() {
 
 // ── boot ──────────────────────────────────────────────────────────────────────
 if (state.user && state.user.roomCode) {
+  scheduleDaily();
   subscribeRoom(state.user.roomCode);
 } else {
   setState({ loading: false });

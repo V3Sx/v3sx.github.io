@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="dois cards" />
+  <meta name="description" content="Uma sala para dois. Dois textos por dia." />
+  <link rel="manifest" href="manifest.json" />
+  <title>dois cards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1e1e1e;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.15);
+      --text: #f0ede8;
+      --text2: rgba(240,237,232,0.55);
+      --text3: rgba(240,237,232,0.28);
+      --accent: #d4c5a9;
+      --green: #4a7c59;
+      --green-bg: rgba(74,124,89,0.15);
+      --gold: #d4a853;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans: 'DM Sans', system-ui, sans-serif;
+      --r: 14px;
+      --r2: 20px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+    html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    input, textarea, button, select { font-family: var(--sans); }
+    ::-webkit-scrollbar { width: 0; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:translateY(0) } }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .au { animation: fadeUp .5s ease both }
+    .au1 { animation: fadeUp .5s ease .1s both }
+    .au2 { animation: fadeUp .5s ease .2s both }
+    .au3 { animation: fadeUp .5s ease .3s both }
+    .screen {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bot);
+      display: flex; flex-direction: column;
+    }
+    .scroll { overflow-y: auto; overflow-x: hidden; flex: 1; -webkit-overflow-scrolling: touch; }
+    .pad { padding: 0 22px; }
+    /* Inputs */
+    input[type=text], textarea {
+      display: block; width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      font-size: 16px; color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type=text]:focus, textarea:focus { border-color: rgba(255,255,255,.3); }
+    textarea { resize: none; line-height: 1.7; }
+    /* Buttons */
+    .btn-main {
+      display: block; width: 100%;
+      background: var(--text); color: var(--bg);
+      border: none; border-radius: var(--r);
+      padding: 15px; font-size: 15px;
+      cursor: pointer; letter-spacing: .02em;
+      transition: opacity .15s;
+    }
+    .btn-main:active { opacity: .8; }
+    .btn-ghost {
+      display: block; width: 100%;
+      background: transparent; color: var(--text2);
+      border: 1px solid var(--border2); border-radius: var(--r);
+      padding: 15px; font-size: 15px;
+      cursor: pointer; transition: border-color .15s;
+    }
+    .btn-ghost:active { border-color: var(--border2); opacity: .7; }
+    .btn-sm {
+      background: var(--surface2); color: var(--accent);
+      border: 1px solid var(--border); border-radius: var(--r);
+      padding: 8px 18px; font-size: 13px; cursor: pointer;
+    }
+    .btn-back {
+      background: none; border: none;
+      color: var(--text3); font-size: 14px;
+      cursor: pointer; padding: 0; letter-spacing: .02em;
+    }
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 20px;
+    }
+    .card-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .card-user { font-size:12px; color:var(--text3); letter-spacing:.08em; text-transform:uppercase; }
+    .card-text { font-family:var(--serif); font-size:18px; line-height:1.55; font-style:italic; color:var(--text); }
+    .card-placeholder { font-size:14px; color:var(--text3); line-height:1.6; font-style:italic; }
+    /* Badges */
+    .badge { font-size:11px; padding:3px 10px; border-radius:20px; letter-spacing:.04em; }
+    .badge-green { background:var(--green-bg); color:var(--green); }
+    .badge-dim { background:transparent; color:var(--text3); border:1px solid var(--border); }
+    /* Stars */
+    .star { font-size:28px; cursor:pointer; transition:color .12s; line-height:1; }
+    .star.on { color:var(--gold); }
+    .star.off { color:var(--border2); }
+    .star.sm { font-size:14px; }
+    /* Nav */
+    .nav {
+      border-top:1px solid var(--border);
+      background:var(--bg);
+      display:flex; justify-content:space-around;
+      padding: 14px 0;
+      padding-bottom: max(var(--safe-bot), 16px);
+    }
+    .nav-btn { background:none; border:none; color:var(--text2); font-size:13px; cursor:pointer; letter-spacing:.04em; padding:6px 20px; }
+    /* Misc */
+    .label { display:block; font-size:12px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px; }
+    .err { font-size:13px; color:#c0392b; margin-top:8px; }
+    .dot-pulse { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; animation:pulse 2s ease infinite; }
+    .room-badge { display:inline-block; font-size:12px; color:var(--text3); letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--border); border-radius:20px; padding:4px 12px; margin-bottom:10px; }
+    .divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ── Storage ──────────────────────────────────────────────────────────
+const S = {
+  get: k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null } catch { return null } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} },
+  del: k => { try { localStorage.removeItem(k) } catch {} }
+}
+
+function todayStr() { return new Date().toISOString().slice(0,10) }
+function fmtDate(iso) {
+  return new Date(iso+'T12:00:00').toLocaleDateString('pt-BR', { weekday:'short', day:'numeric', month:'short' })
+}
+function genCode() {
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  return Array.from({length:5},()=>c[Math.floor(Math.random()*c.length)]).join('')
+}
+function genId() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
+function getRoomKey(code) { return 'room_v1_'+code }
+function loadRoom(code) { return S.get(getRoomKey(code)) }
+function saveRoom(room) { S.set(getRoomKey(room.code), room) }
+function getPartner(room, myId) {
+  const pid = Object.keys(room.members||{}).find(id=>id!==myId)
+  return pid ? room.members[pid] : null
+}
+
+const LABELS = ['','honesto','tocante','inspirador','marcante','perfeito']
+
+// ── Stars ─────────────────────────────────────────────────────────────
+function Stars({ value, onChange, readonly=false, small=false }) {
+  return (
+    <div style={{display:'flex', gap: small ? 3 : 10}}>
+      {[1,2,3,4,5].map(i=>(
+        <span key={i}
+          className={`star ${small?'sm':''} ${i<=value?'on':'off'}`}
+          onClick={()=> !readonly && onChange?.(i)}
+          style={{cursor: readonly?'default':'pointer'}}
+        >★</span>
+      ))}
+    </div>
+  )
+}
+
+// ── Onboarding ────────────────────────────────────────────────────────
+function Onboarding({ onCreate, onJoin }) {
+  const [mode, setMode] = useState(null)
+  const [name, setName] = useState('')
+  const [code, setCode] = useState('')
+  const [err, setErr] = useState('')
+
+  function doCreate() {
+    if (name.trim().length < 2) return setErr('nome muito curto')
+    onCreate(name.trim())
+  }
+  function doJoin() {
+    if (name.trim().length < 2) return setErr('nome muito curto')
+    if (code.trim().length < 4) return setErr('código inválido')
+    const result = onJoin(name.trim(), code.trim().toUpperCase())
+    if (result === 'notfound') setErr('sala não encontrada')
+    else if (result === 'full') setErr('sala já está cheia')
+  }
+
+  return (
+    <div className="screen" style={{justifyContent:'center'}}>
+      <div className="pad au" style={{width:'100%', maxWidth:420, margin:'0 auto'}}>
+
+        {!mode && <>
+          <div style={{fontFamily:'var(--serif)', fontSize:52, lineHeight:1.05, marginBottom:14}}>
+            dois<br/>cards
+          </div>
+          <p style={{fontSize:15, color:'var(--text2)', lineHeight:1.6, marginBottom:44}}>
+            uma sala para dois.<br/>dois textos por dia.
+          </p>
+          <div className="au2" style={{display:'flex', flexDirection:'column', gap:12}}>
+            <button className="btn-main" onClick={()=>{setMode('create');setErr('')}}>criar sala</button>
+            <button className="btn-ghost" onClick={()=>{setMode('join');setErr('')}}>entrar em sala</button>
+          </div>
+        </>}
+
+        {mode === 'create' && <div className="au">
+          <button className="btn-back" onClick={()=>setMode(null)} style={{marginBottom:28}}>← voltar</button>
+          <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, marginBottom:24}}>nova sala</h2>
+          <label className="label">seu nome</label>
+          <input type="text" placeholder="como quer ser chamado?" value={name}
+            onChange={e=>{setName(e.target.value);setErr('')}} maxLength={24} autoFocus />
+          {err && <p className="err">{err}</p>}
+          <button className="btn-main" style={{marginTop:20}} onClick={doCreate}>criar</button>
+        </div>}
+
+        {mode === 'join' && <div className="au">
+          <button className="btn-back" onClick={()=>setMode(null)} style={{marginBottom:28}}>← voltar</button>
+          <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, marginBottom:24}}>entrar na sala</h2>
+          <label className="label">seu nome</label>
+          <input type="text" placeholder="como quer ser chamado?" value={name}
+            onChange={e=>{setName(e.target.value);setErr('')}} maxLength={24} autoFocus style={{marginBottom:16}} />
+          <label className="label">código da sala</label>
+          <input type="text" placeholder="ex: AB4C2"
+            value={code}
+            onChange={e=>{setCode(e.target.value);setErr('')}}
+            maxLength={6}
+            style={{letterSpacing:'0.2em', textTransform:'uppercase'}} />
+          {err && <p className="err">{err}</p>}
+          <button className="btn-main" style={{marginTop:20}} onClick={doJoin}>entrar</button>
+        </div>}
+
+      </div>
+    </div>
+  )
+}
+
+// ── Home ──────────────────────────────────────────────────────────────
+function Home({ room, user, onWrite, onRate, onHistory, onLeave }) {
+  const today = todayStr()
+  const myCard = room.cards?.[today]?.[user.id]
+  const partner = getPartner(room, user.id)
+  const partnerCard = partner ? room.cards?.[today]?.[partner.id] : null
+  const myRating = room.ratings?.[today]?.[user.id]
+  const canSeePartner = !!myCard
+
+  return (
+    <div className="screen">
+      <div className="scroll">
+        <div className="pad au" style={{paddingTop:56, paddingBottom:8}}>
+          <div className="room-badge">sala {room.code}</div>
+          <h1 style={{fontFamily:'var(--serif)', fontSize:30, fontWeight:400, marginBottom:6}}>{fmtDate(today)}</h1>
+          {partner
+            ? <p style={{fontSize:14, color:'var(--text2)', display:'flex', alignItems:'center', gap:8}}>
+                <span className="dot-pulse"/>com {partner.name}
+              </p>
+            : <p style={{fontSize:14, color:'var(--text3)'}}>
+                compartilhe o código <strong style={{color:'var(--accent)', fontWeight:400}}>{room.code}</strong> com alguém
+              </p>
+          }
+        </div>
+
+        <div className="pad" style={{paddingTop:24, paddingBottom:24, display:'flex', flexDirection:'column', gap:14}}>
+
+          {/* My card */}
+          <div className="card au1">
+            <div className="card-meta">
+              <span className="card-user">eu</span>
+              {myCard
+                ? <span className="badge badge-green">publicado</span>
+                : <span className="badge badge-dim">pendente</span>
+              }
+            </div>
+            {myCard
+              ? <p className="card-text">"{myCard.text}"</p>
+              : <>
+                  <p className="card-placeholder">seu espaço de hoje</p>
+                  <button className="btn-sm" style={{marginTop:16}} onClick={onWrite}>escrever agora</button>
+                </>
+            }
+          </div>
+
+          {/* Partner card */}
+          <div className="card au2">
+            <div className="card-meta">
+              <span className="card-user">{partner ? partner.name : 'parceiro'}</span>
+              {partnerCard
+                ? <span className="badge badge-green">publicado</span>
+                : <span className="badge badge-dim">{partner ? 'aguardando' : 'vazio'}</span>
+              }
+            </div>
+
+            {!partner && <p className="card-placeholder">sala aguardando parceiro</p>}
+
+            {partner && !partnerCard && <p className="card-placeholder">ainda não publicou hoje</p>}
+
+            {partner && partnerCard && !canSeePartner && (
+              <p className="card-placeholder">publique seu card para ler o de {partner.name}</p>
+            )}
+
+            {partner && partnerCard && canSeePartner && <>
+              <p className="card-text">"{partnerCard.text}"</p>
+              <hr className="divider" />
+              {myRating
+                ? <div style={{display:'flex', alignItems:'center', gap:10}}>
+                    <Stars value={myRating} readonly small />
+                    <span style={{fontSize:13, color:'var(--accent)', fontStyle:'italic'}}>{LABELS[myRating]}</span>
+                  </div>
+                : <button className="btn-sm" onClick={onRate}>avaliar</button>
+              }
+            </>}
+          </div>
+
+        </div>
+      </div>
+
+      <nav className="nav">
+        <button className="nav-btn" onClick={onHistory}>histórico</button>
+        <button className="nav-btn" style={{fontSize:12, color:'var(--text3)'}} onClick={onLeave}>sair da sala</button>
+      </nav>
+    </div>
+  )
+}
+
+// ── Write ─────────────────────────────────────────────────────────────
+function Write({ onSubmit, onBack }) {
+  const [text, setText] = useState('')
+  const max = 280
+  const ok = text.trim().length >= 3
+
+  return (
+    <div className="screen">
+      <div className="scroll pad au" style={{paddingTop:52}}>
+        <button className="btn-back" onClick={onBack}>← voltar</button>
+        <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, margin:'22px 0 6px'}}>seu card de hoje</h2>
+        <p style={{fontSize:14, color:'var(--text2)', lineHeight:1.6, marginBottom:24}}>
+          uma frase, um pensamento, o que sentiu hoje
+        </p>
+        <textarea
+          placeholder="comece a escrever…"
+          value={text}
+          onChange={e=>setText(e.target.value.slice(0,max))}
+          rows={8}
+          autoFocus
+        />
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:10, marginBottom:24}}>
+          <span style={{fontSize:12, color:'var(--text3)'}}>{text.length}/{max}</span>
+          <button
+            className="btn-main"
+            style={{width:'auto', padding:'11px 28px', opacity: ok?1:.4}}
+            onClick={()=> ok && onSubmit(text.trim())}
+          >publicar</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Rate ──────────────────────────────────────────────────────────────
+function Rate({ partnerName, cardText, onSubmit, onBack }) {
+  const [rating, setRating] = useState(0)
+
+  return (
+    <div className="screen">
+      <div className="scroll pad au" style={{paddingTop:52}}>
+        <button className="btn-back" onClick={onBack}>← voltar</button>
+        <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, margin:'22px 0 4px'}}>avaliação</h2>
+        <p style={{fontSize:14, color:'var(--text2)', marginBottom:24}}>card de {partnerName}</p>
+
+        <div className="card" style={{marginBottom:32}}>
+          <p className="card-text">"{cardText}"</p>
+        </div>
+
+        <div style={{display:'flex', justifyContent:'center', marginBottom:14}}>
+          <Stars value={rating} onChange={setRating} />
+        </div>
+
+        {rating > 0 && (
+          <p style={{textAlign:'center', fontFamily:'var(--serif)', fontSize:20, fontStyle:'italic', color:'var(--accent)', marginBottom:28, animation:'fadeIn .3s ease'}}>
+            {LABELS[rating]}
+          </p>
+        )}
+
+        <button
+          className="btn-main"
+          style={{opacity: rating===0?.4:1}}
+          onClick={()=> rating>0 && onSubmit(rating)}
+        >confirmar avaliação</button>
+      </div>
+    </div>
+  )
+}
+
+// ── History ───────────────────────────────────────────────────────────
+function History({ room, userId, onBack }) {
+  const partner = getPartner(room, userId)
+  const today = todayStr()
+  const days = Object.keys(room.cards||{}).sort().reverse().filter(d=>d!==today)
+
+  return (
+    <div className="screen">
+      <div className="scroll pad au" style={{paddingTop:52, paddingBottom:32}}>
+        <button className="btn-back" onClick={onBack}>← voltar</button>
+        <h2 style={{fontFamily:'var(--serif)', fontSize:28, fontWeight:400, margin:'22px 0 28px'}}>histórico</h2>
+
+        {days.length === 0 && (
+          <p style={{color:'var(--text3)', fontStyle:'italic', fontSize:15}}>nenhum card anterior ainda</p>
+        )}
+
+        {days.map(day => {
+          const mc = room.cards[day]?.[userId]
+          const pc = partner ? room.cards[day]?.[partner.id] : null
+          const mr = room.ratings?.[day]?.[userId]
+          const pr = partner ? room.ratings?.[day]?.[partner.id] : null
+          return (
+            <div key={day} style={{marginBottom:28}}>
+              <div style={{fontSize:11, color:'var(--text3)', letterSpacing:'.07em', textTransform:'uppercase', marginBottom:10}}>
+                {fmtDate(day)}
+              </div>
+              {mc && <div className="card" style={{marginBottom:8}}>
+                <div className="card-meta">
+                  <span className="card-user">eu</span>
+                  {pr && <Stars value={pr} readonly small />}
+                </div>
+                <p className="card-text" style={{fontSize:16}}>"{mc.text}"</p>
+              </div>}
+              {pc && <div className="card">
+                <div className="card-meta">
+                  <span className="card-user">{partner?.name||'parceiro'}</span>
+                  {mr && <Stars value={mr} readonly small />}
+                </div>
+                <p className="card-text" style={{fontSize:16}}>"{pc.text}"</p>
+              </div>}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── App ───────────────────────────────────────────────────────────────
+function App() {
+  const [screen, setScreen] = useState('loading')
+  const [room, setRoom] = useState(null)
+  const [user, setUser] = useState(null)
+
+  useEffect(()=>{
+    const u = S.get('user')
+    const rc = S.get('roomCode')
+    if (u && rc) {
+      const r = loadRoom(rc)
+      if (r && r.members?.[u.id]) {
+        setUser(u); setRoom(r); setScreen('home'); return
+      }
+    }
+    setScreen('onboarding')
+  },[])
+
+  // Poll for changes (partner on same device or another tab)
+  useEffect(()=>{
+    if (!room) return
+    const id = setInterval(()=>{
+      const fresh = loadRoom(room.code)
+      if (fresh && JSON.stringify(fresh) !== JSON.stringify(room)) setRoom(fresh)
+    }, 2500)
+    return ()=>clearInterval(id)
+  },[room])
+
+  function handleCreate(name) {
+    const id = genId()
+    const code = genCode()
+    const u = { id, name }
+    const r = { code, members:{[id]:{id,name}}, cards:{}, ratings:{}, createdAt:new Date().toISOString() }
+    saveRoom(r); S.set('user',u); S.set('roomCode',code)
+    setUser(u); setRoom(r); setScreen('home')
+  }
+
+  function handleJoin(name, code) {
+    const existing = loadRoom(code)
+    if (!existing) return 'notfound'
+    if (Object.keys(existing.members||{}).length >= 2) return 'full'
+    const id = genId()
+    const u = { id, name }
+    existing.members[id] = {id,name}
+    saveRoom(existing); S.set('user',u); S.set('roomCode',code)
+    setUser(u); setRoom(existing); setScreen('home')
+  }
+
+  function handleWrite(text) {
+    const today = todayStr()
+    const r = { ...room }
+    if (!r.cards[today]) r.cards[today] = {}
+    r.cards[today][user.id] = { text, at: new Date().toISOString() }
+    saveRoom(r); setRoom(r); setScreen('home')
+  }
+
+  function handleRate(rating) {
+    const today = todayStr()
+    const r = { ...room }
+    if (!r.ratings[today]) r.ratings[today] = {}
+    r.ratings[today][user.id] = rating
+    saveRoom(r); setRoom(r); setScreen('home')
+  }
+
+  function handleLeave() {
+    if (!confirm('Sair da sala? Você pode entrar novamente com o código.')) return
+    S.del('user'); S.del('roomCode')
+    setUser(null); setRoom(null); setScreen('onboarding')
+  }
+
+  if (screen === 'loading') return (
+    <div className="screen" style={{alignItems:'center', justifyContent:'center'}}>
+      <div style={{fontFamily:'var(--serif)', fontSize:22, color:'var(--text3)', animation:'pulse 1.5s ease infinite'}}>
+        dois cards
+      </div>
+    </div>
+  )
+
+  if (screen === 'onboarding') return <Onboarding onCreate={handleCreate} onJoin={handleJoin} />
+
+  if (screen === 'home') return (
+    <Home room={room} user={user}
+      onWrite={()=>setScreen('write')}
+      onRate={()=>setScreen('rate')}
+      onHistory={()=>setScreen('history')}
+      onLeave={handleLeave}
+    />
+  )
+
+  if (screen === 'write') return <Write onSubmit={handleWrite} onBack={()=>setScreen('home')} />
+
+  if (screen === 'rate') {
+    const partner = getPartner(room, user.id)
+    const partnerCard = room.cards?.[todayStr()]?.[partner?.id]
+    return <Rate partnerName={partner?.name} cardText={partnerCard?.text} onSubmit={handleRate} onBack={()=>setScreen('home')} />
+  }
+
+  if (screen === 'history') return <History room={room} userId={user.id} onBack={()=>setScreen('home')} />
+
+  return null
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+</script>
+
+<script>
+// Service Worker for PWA / offline
+if ('serviceWorker' in navigator) {
+  const sw = `
+    const CACHE = 'doiscards-v1';
+    const URLS = ['/'];
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys =>
+        Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+      ));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        fetch(e.request).catch(() => caches.match(e.request))
+      );
+    });
+  `;
+  const blob = new Blob([sw], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(() => {});
+}
+</script>
+</body>
+</html>
